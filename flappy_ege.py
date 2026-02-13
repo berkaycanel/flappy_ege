@@ -1,5 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
+from pathlib import Path
 
 # Sayfa yapılandırması
 st.set_page_config(
@@ -9,15 +11,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Resmi base64'e çevir
+def get_image_base64():
+    try:
+        # Resmi oku ve base64'e çevir
+        img_path = Path("IMG_3869.jpg")
+        if img_path.exists():
+            with open(img_path, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+        else:
+            return ""
+    except:
+        return ""
+
+img_base64 = get_image_base64()
 
 # HTML ve JavaScript ile tam oyun
-game_html = """
+game_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
-        body {
+        body {{
             margin: 0;
             padding: 0;
             display: flex;
@@ -26,49 +42,50 @@ game_html = """
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: Arial, sans-serif;
-        }
-        #gameContainer {
+        }}
+        #gameContainer {{
             text-align: center;
-        }
-        canvas {
+        }}
+        canvas {{
             border: 5px solid white;
             border-radius: 15px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             display: block;
             margin: 20px auto;
             background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
-        }
-        #score {
+            cursor: pointer;
+        }}
+        #score {{
             font-size: 3em;
             color: white;
             font-weight: bold;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
             margin: 20px 0;
-        }
-        #highScore {
+        }}
+        #highScore {{
             font-size: 1.5em;
             color: #ffd700;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        #instructions {
+        }}
+        #instructions {{
             color: white;
             font-size: 1.3em;
             margin: 20px 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .gameOver {
+        }}
+        .gameOver {{
             color: #ff4444;
             font-size: 4em;
             font-weight: bold;
             text-shadow: 4px 4px 8px rgba(0,0,0,0.7);
             animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        button {
+        }}
+        @keyframes pulse {{
+            0%, 100% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.1); }}
+        }}
+        button {{
             font-size: 1.5em;
             padding: 15px 40px;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -80,11 +97,11 @@ game_html = """
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             transition: all 0.3s;
             margin: 10px;
-        }
-        button:hover {
+        }}
+        button:hover {{
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-        }
+        }}
     </style>
 </head>
 <body>
@@ -113,7 +130,7 @@ game_html = """
         document.getElementById('highScoreValue').textContent = highScore;
         
         // Kuş
-        const bird = {
+        const bird = {{
             x: 100,
             y: 250,
             width: 50,
@@ -121,11 +138,23 @@ game_html = """
             velocity: 0,
             gravity: 0.6,
             jump: -12,
-            image: new Image()
-        };
+            image: new Image(),
+            imageLoaded: false
+        }};
         
         // Ege'nin resmini yükle
-        bird.image.src = 'IMG_3869.jpg';
+        const imageData = '{img_base64}';
+        if (imageData) {{
+            bird.image.onload = function() {{
+                bird.imageLoaded = true;
+                console.log('Resim yüklendi!');
+            }};
+            bird.image.onerror = function() {{
+                console.log('Resim yüklenemedi, placeholder kullanılıyor');
+                bird.imageLoaded = false;
+            }};
+            bird.image.src = 'data:image/jpeg;base64,' + imageData;
+        }}
         
         // Borular
         let pipes = [];
@@ -135,23 +164,31 @@ game_html = """
         let frameCount = 0;
         
         // Kontroller
-        document.addEventListener('keydown', (e) => {
-            if ((e.code === 'Space' || e.code === 'ArrowUp') && gameStarted && !gameOver) {
+        document.addEventListener('keydown', (e) => {{
+            if ((e.code === 'Space' || e.code === 'ArrowUp') && gameStarted && !gameOver) {{
+                e.preventDefault();
                 jump();
-            }
-        });
+            }}
+        }});
         
-        canvas.addEventListener('click', () => {
-            if (gameStarted && !gameOver) {
+        canvas.addEventListener('click', () => {{
+            if (gameStarted && !gameOver) {{
                 jump();
-            }
-        });
+            }}
+        }});
         
-        function jump() {
+        canvas.addEventListener('touchstart', (e) => {{
+            e.preventDefault();
+            if (gameStarted && !gameOver) {{
+                jump();
+            }}
+        }});
+        
+        function jump() {{
             bird.velocity = bird.jump;
-        }
+        }}
         
-        function startGame() {
+        function startGame() {{
             gameStarted = true;
             gameOver = false;
             score = 0;
@@ -164,110 +201,131 @@ game_html = """
             document.getElementById('gameOverText').style.display = 'none';
             document.getElementById('scoreValue').textContent = score;
             gameLoop();
-        }
+        }}
         
-        function restartGame() {
+        function restartGame() {{
             startGame();
-        }
+        }}
         
-        function createPipe() {
+        function createPipe() {{
             const gapY = Math.random() * (canvas.height - pipeGap - 200) + 100;
-            pipes.push({
+            pipes.push({{
                 x: canvas.width,
                 gapY: gapY,
                 scored: false
-            });
-        }
+            }});
+        }}
         
-        function updateBird() {
+        function updateBird() {{
             bird.velocity += bird.gravity;
             bird.y += bird.velocity;
             
-            // Zemin ve tavan kontrolü
-            if (bird.y < 0) {
+            if (bird.y < 0) {{
                 bird.y = 0;
                 bird.velocity = 0;
-            }
-            if (bird.y + bird.height > canvas.height - 20) {
+            }}
+            if (bird.y + bird.height > canvas.height - 20) {{
                 endGame();
-            }
-        }
+            }}
+        }}
         
-        function updatePipes() {
-            // Yeni boru oluştur
+        function updatePipes() {{
             frameCount++;
-            if (frameCount % 90 === 0) {
+            if (frameCount % 90 === 0) {{
                 createPipe();
-            }
+            }}
             
-            // Boruları hareket ettir
-            for (let i = pipes.length - 1; i >= 0; i--) {
+            for (let i = pipes.length - 1; i >= 0; i--) {{
                 pipes[i].x -= pipeSpeed;
                 
-                // Skor
-                if (!pipes[i].scored && pipes[i].x + pipeWidth < bird.x) {
+                if (!pipes[i].scored && pipes[i].x + pipeWidth < bird.x) {{
                     score++;
                     pipes[i].scored = true;
                     document.getElementById('scoreValue').textContent = score;
                     
-                    if (score > highScore) {
+                    if (score > highScore) {{
                         highScore = score;
                         localStorage.setItem('flappyEgeHighScore', highScore);
                         document.getElementById('highScoreValue').textContent = highScore;
-                    }
-                }
+                    }}
+                }}
                 
-                // Çarpışma kontrolü
                 if (bird.x + bird.width > pipes[i].x && 
-                    bird.x < pipes[i].x + pipeWidth) {
+                    bird.x < pipes[i].x + pipeWidth) {{
                     if (bird.y < pipes[i].gapY || 
-                        bird.y + bird.height > pipes[i].gapY + pipeGap) {
+                        bird.y + bird.height > pipes[i].gapY + pipeGap) {{
                         endGame();
-                    }
-                }
+                    }}
+                }}
                 
-                // Ekrandan çıkan boruları sil
-                if (pipes[i].x + pipeWidth < 0) {
+                if (pipes[i].x + pipeWidth < 0) {{
                     pipes.splice(i, 1);
-                }
-            }
-        }
+                }}
+            }}
+        }}
         
-        function draw() {
-            // Temizle
+        function draw() {{
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Bulutlar
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.arc(100, 100, 40, 0, Math.PI * 2);
+            ctx.arc(140, 90, 50, 0, Math.PI * 2);
+            ctx.arc(180, 100, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(500, 150, 35, 0, Math.PI * 2);
+            ctx.arc(535, 140, 45, 0, Math.PI * 2);
+            ctx.arc(575, 150, 35, 0, Math.PI * 2);
+            ctx.fill();
+            
             // Borular
-            pipes.forEach(pipe => {
-                // Üst boru
+            pipes.forEach(pipe => {{
                 ctx.fillStyle = '#2ECC71';
                 ctx.fillRect(pipe.x, 0, pipeWidth, pipe.gapY);
                 ctx.strokeStyle = '#27AE60';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(pipe.x, 0, pipeWidth, pipe.gapY);
                 
-                // Üst boru başlığı
                 ctx.fillStyle = '#27AE60';
                 ctx.fillRect(pipe.x - 10, pipe.gapY - 30, pipeWidth + 20, 30);
                 ctx.strokeRect(pipe.x - 10, pipe.gapY - 30, pipeWidth + 20, 30);
                 
-                // Alt boru
                 ctx.fillStyle = '#2ECC71';
                 ctx.fillRect(pipe.x, pipe.gapY + pipeGap, pipeWidth, canvas.height - pipe.gapY - pipeGap);
                 ctx.strokeRect(pipe.x, pipe.gapY + pipeGap, pipeWidth, canvas.height - pipe.gapY - pipeGap);
                 
-                // Alt boru başlığı
                 ctx.fillStyle = '#27AE60';
                 ctx.fillRect(pipe.x - 10, pipe.gapY + pipeGap, pipeWidth + 20, 30);
                 ctx.strokeRect(pipe.x - 10, pipe.gapY + pipeGap, pipeWidth + 20, 30);
-            });
+            }});
             
-            // Kuş (Ege)
+            // Kuş
             ctx.save();
             const rotation = Math.min(Math.max(bird.velocity * 3, -45), 45);
             ctx.translate(bird.x + bird.width/2, bird.y + bird.height/2);
             ctx.rotate(rotation * Math.PI / 180);
-            ctx.drawImage(bird.image, -bird.width/2, -bird.height/2, bird.width, bird.height);
+            
+            if (bird.imageLoaded) {{
+                ctx.drawImage(bird.image, -bird.width/2, -bird.height/2, bird.width, bird.height);
+            }} else {{
+                // Fallback: Sarı yuvarlak
+                ctx.beginPath();
+                ctx.arc(0, 0, bird.width/2, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFD700';
+                ctx.fill();
+                ctx.strokeStyle = '#FFA500';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(10, -5, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }}
+            
             ctx.restore();
             
             // Zemin
@@ -275,25 +333,24 @@ game_html = """
             ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
             ctx.fillStyle = '#654321';
             ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
-        }
+        }}
         
-        function endGame() {
+        function endGame() {{
             gameOver = true;
             gameStarted = false;
             document.getElementById('gameOverText').style.display = 'block';
             document.getElementById('restartButton').style.display = 'inline-block';
-        }
+        }}
         
-        function gameLoop() {
-            if (!gameOver && gameStarted) {
+        function gameLoop() {{
+            if (!gameOver && gameStarted) {{
                 updateBird();
                 updatePipes();
                 draw();
                 requestAnimationFrame(gameLoop);
-            }
-        }
+            }}
+        }}
         
-        // İlk çizim
         draw();
     </script>
 </body>
@@ -306,5 +363,9 @@ components.html(game_html, height=900, scrolling=False)
 st.markdown("""
 <div style="text-align: center; margin-top: 20px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
     <p style="font-size: 1.2em;">Made with ❤️ | Flappy Ege © 2026</p>
+    <p style="font-size: 0.9em; margin-top: 10px;">
+    ⚠️ IMG_3869.jpg dosyasını bu Python dosyası ile aynı klasöre koyun!<br>
+    💡 Eğer resim görünmüyorsa sarı yuvarlak göreceksiniz (oyun hala oynanabilir!)
+    </p>
 </div>
 """, unsafe_allow_html=True)
