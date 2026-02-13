@@ -358,7 +358,7 @@ game_html = f"""
 """
 
 # Oyunu göster
-components.html(game_html, height=900, scrolling=False)
+components.html(game_html, height=1200, scrolling=False)
 
 st.markdown("""
 <div style="text-align: center; margin-top: 20px; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
