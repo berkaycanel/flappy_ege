@@ -150,8 +150,8 @@ const bird = {{
     width: 50,
     height: 50,
     velocity: 0,
-    gravity: 0.6,
-    jump: -12,
+    gravity: 0.35,
+    jump: -8,
     image: new Image(),
     imageLoaded: false
 }};
@@ -164,7 +164,7 @@ if (imageData) {{
 
 let pipes = [];
 const pipeWidth = 80;
-let pipeGap = window.innerWidth < 768 ? 230 : 200;
+let pipeGap = window.innerWidth < 768 ? 280 : 260;
 const pipeSpeed = 3;
 let frameCount = 0;
 
